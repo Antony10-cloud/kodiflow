@@ -73,3 +73,20 @@ export async function createInvoice(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard/invoices");
 }
+
+export async function createExpense(formData: FormData) {
+  const { supabase, organizationId } = await getWorkspace();
+  const amount = Number(formData.get("amount"));
+  if (amount <= 0) return;
+  const { error } = await supabase.from("expenses").insert({
+    organization_id: organizationId,
+    property_id: text(formData, "property_id") || null,
+    category: text(formData, "category"),
+    description: text(formData, "description"),
+    amount,
+    expense_date: text(formData, "expense_date"),
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard/expenses");
+  revalidatePath("/dashboard/reports");
+}
