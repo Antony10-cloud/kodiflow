@@ -13,7 +13,6 @@ const navigation = [
   ["Utilities", "/dashboard/utilities"],
   ["Expenses", "/dashboard/expenses"],
   ["Reports", "/dashboard/reports"],
-  ["Platform admin", "/dashboard/admin"],
   ["Settings", "/dashboard/settings"],
 ];
 
@@ -21,6 +20,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  const { data: membership } = await supabase.from("memberships").select("role")
+    .eq("user_id", user.id).limit(1).maybeSingle();
+  if (membership?.role === "platform_admin") redirect("/admin");
+  if (!membership) redirect("/login?error=Your%20landlord%20workspace%20is%20not%20assigned");
 
   return (
     <main className="dashboard-shell">

@@ -7,6 +7,14 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient();
     await supabase.auth.exchangeCodeForSession(code);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: membership } = await supabase.from("memberships")
+        .select("role").eq("user_id", user.id).limit(1).maybeSingle();
+      if (membership?.role === "platform_admin") {
+        return NextResponse.redirect(new URL("/admin", url.origin));
+      }
+    }
   }
   return NextResponse.redirect(new URL("/dashboard", url.origin));
 }
