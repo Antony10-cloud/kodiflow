@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { signOut } from "../login/actions";
+import { DarajaStatus } from "./daraja-status";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -36,6 +37,7 @@ export default async function DashboardPage() {
         <div className="pilot-ready">
           <span>✓</span><div><h2>Production foundation connected</h2><p>Authenticated server rendering, PostgreSQL-ready data access, and protected dashboard routing are now in place.</p></div>
         </div>
+        <DarajaStatus />
       </section>
     </main>
   );
