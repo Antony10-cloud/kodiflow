@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10261f">
+  <title>KodiFlow — Rent management, made simple</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section class="login-screen" id="loginScreen" hidden>
+    <div class="login-brand">
+      <span class="brand-mark">K</span>
+      <strong>Kodi<span>Flow</span></strong>
+    </div>
+    <div class="login-card">
+      <span class="eyebrow">INTERACTIVE PRODUCT DEMO</span>
+      <h1>Rent management,<br><em>made simple.</em></h1>
+      <p>See how Kenyan landlords automate rent collection, M-Pesa reconciliation, invoicing, and tenant communication.</p>
+      <div class="demo-roles">
+        <button class="role-card selected" data-demo-role="landlord">
+          <span class="role-icon">⌂</span><span><strong>Landlord demo</strong><small>Properties, tenants and collections</small></span><i>✓</i>
+        </button>
+        <button class="role-card" data-demo-role="admin">
+          <span class="role-icon">⚙</span><span><strong>Platform admin demo</strong><small>Landlords, plans and platform activity</small></span><i></i>
+        </button>
+      </div>
+      <button class="login-button" id="enterDemo">Enter KodiFlow demo →</button>
+      <small class="demo-note">No password required · Safe sample data · Reset anytime</small>
+    </div>
+    <div class="login-proof">
+      <span><strong>98%</strong> payment matching</span>
+      <span><strong>3 hrs</strong> saved weekly</span>
+      <span><strong>Real-time</strong> rent visibility</span>
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <a class="brand" href="#dashboard" aria-label="KodiFlow home">
+      <span class="brand-mark">K</span>
+      <span>Kodi<span>Flow</span></span>
+    </a>
+
+    <nav id="navigation" aria-label="Main navigation">
+      <button class="nav-item active" data-page="dashboard"><span>⌂</span> Overview</button>
+      <button class="nav-item" data-page="properties"><span>▦</span> Properties</button>
+      <button class="nav-item" data-page="units"><span>□</span> Units</button>
+      <button class="nav-item" data-page="tenants"><span>♙</span> Tenants</button>
+      <button class="nav-item" data-page="invoices"><span>▤</span> Invoices</button>
+      <button class="nav-item" data-page="payments"><span>↔</span> Payments</button>
+      <button class="nav-item" data-page="utilities"><span>◈</span> Utilities</button>
+      <button class="nav-item" data-page="expenses"><span>−</span> Expenses</button>
+      <button class="nav-item" data-page="reminders"><span>✉</span> Reminders</button>
+      <button class="nav-item" data-page="reports"><span>⌁</span> Reports</button>
+      <button class="nav-item" data-page="mpesa"><span>●</span> M-Pesa setup</button>
+      <button class="nav-item admin-only" data-page="admin"><span>⚙</span> Platform admin</button>
+    </nav>
+
+    <div class="trial-card">
+      <strong>Free trial</strong>
+      <span>24 days remaining</span>
+      <div class="trial-bar"><i></i></div>
+      <button data-page-link="subscription">View plan</button>
+    </div>
+
+    <div class="user-card">
+      <div class="avatar">AM</div>
+      <div><strong>Antony Mugo</strong><span>Landlord account</span></div>
+      <button id="logoutButton" aria-label="Exit demo">↪</button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <button id="menuButton" class="icon-button mobile-only" aria-label="Open menu">☰</button>
+      <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Search tenants, units, payments…"></div>
+      <div class="top-actions">
+        <button class="secondary-button" id="tourButton">▶ Pitch tour</button>
+        <button class="icon-button" aria-label="Notifications">♢<i class="notification-dot"></i></button>
+        <button class="primary-button" id="quickAddButton">＋ Add new</button>
+      </div>
+    </header>
+
+    <section id="app" class="content" aria-live="polite"></section>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+      <h2 id="modalTitle">Add property</h2>
+      <p id="modalDescription">Create a new property in your portfolio.</p>
+      <form id="modalForm"></form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <aside class="tour-card" id="tourCard" hidden>
+    <div class="tour-progress"><i id="tourProgress"></i></div>
+    <span id="tourStepLabel">STEP 1 OF 6</span>
+    <h3 id="tourTitle">Welcome to KodiFlow</h3>
+    <p id="tourText"></p>
+    <div class="tour-actions">
+      <button class="text-button" id="tourClose">Exit tour</button>
+      <button class="primary-button" id="tourNext">Next →</button>
+    </div>
+  </aside>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

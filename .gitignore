@@ -1,0 +1,15 @@
+# KodiFlow local and sensitive files
+.vercel/
+.env
+.env.*
+!.env.example
+outputs/kodiflow/data/
+work/
+node_modules/
+*.log
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
