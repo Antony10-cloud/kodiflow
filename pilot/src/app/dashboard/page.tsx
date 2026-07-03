@@ -1,44 +1,31 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { signOut } from "../login/actions";
 import { DarajaStatus } from "./daraja-status";
+import { invoices, money, payments, properties } from "@/lib/pilot-data";
 
-export default async function DashboardPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: membership } = await supabase
-    .from("memberships")
-    .select("role, organizations(name)")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+export default function DashboardPage() {
+  const billed = invoices.reduce((sum, item) => sum + item.amount, 0);
+  const outstanding = invoices.reduce((sum, item) => sum + item.balance, 0);
+  const collected = payments.filter(item => item.status === "Matched").reduce((sum, item) => sum + item.amount, 0);
+  const occupied = properties.reduce((sum, item) => sum + item.occupied, 0);
+  const units = properties.reduce((sum, item) => sum + item.units, 0);
 
   return (
-    <main className="dashboard-shell">
-      <aside className="pilot-sidebar">
-        <div className="logo"><span>K</span>Kodi<strong>Flow</strong></div>
-        <nav>{["Overview", "Properties", "Units", "Tenants", "Invoices", "Payments", "Reports"].map(item => <a key={item}>{item}</a>)}</nav>
-        <form action={signOut}><button>Sign out</button></form>
-      </aside>
-      <section className="pilot-content">
-        <p className="eyebrow">SECURE PRIVATE PILOT</p>
-        <h1>Good afternoon, Antony</h1>
-        <p className="muted">{membership ? "Your organization workspace is connected." : "Your account is ready. Organization access is awaiting assignment."}</p>
-        <div className="pilot-grid">
-          {[
-            ["Collected this month", "KES 69,500"],
-            ["Outstanding rent", "KES 33,500"],
-            ["Occupancy", "88%"],
-            ["Properties", "3"],
-          ].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>Sample pilot data</small></article>)}
-        </div>
-        <div className="pilot-ready">
-          <span>✓</span><div><h2>Production foundation connected</h2><p>Authenticated server rendering, PostgreSQL-ready data access, and protected dashboard routing are now in place.</p></div>
-        </div>
-        <DarajaStatus />
-      </section>
-    </main>
+    <>
+      <div className="page-heading">
+        <div><p className="eyebrow">LANDLORD WORKSPACE</p><h1>Good afternoon, Antony</h1><p className="muted">Your July rent position at a glance.</p></div>
+        <span className="sample-badge">Sample pilot data</span>
+      </div>
+      <div className="pilot-grid">
+        {[
+          ["Collected this month", money(collected)],
+          ["Outstanding", money(outstanding)],
+          ["Occupancy", `${Math.round(occupied / units * 100)}%`],
+          ["July billed", money(billed)],
+        ].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>Across {properties.length} properties</small></article>)}
+      </div>
+      <div className="pilot-ready">
+        <span>✓</span><div><h2>Your pilot workspace is ready</h2><p>Explore the sample portfolio, invoices and M-Pesa reconciliation flow while live account setup continues.</p></div>
+      </div>
+      <DarajaStatus />
+    </>
   );
 }
