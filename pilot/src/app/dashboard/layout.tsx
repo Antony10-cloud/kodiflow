@@ -9,6 +9,7 @@ const navigation = [
   ["Tenants", "/dashboard/tenants"],
   ["Invoices", "/dashboard/invoices"],
   ["M-Pesa reconciliation", "/dashboard/payments"],
+  ["SMS & WhatsApp", "/dashboard/notifications"],
   ["Receipts", "/dashboard/receipts"],
   ["Utilities", "/dashboard/utilities"],
   ["Expenses", "/dashboard/expenses"],
