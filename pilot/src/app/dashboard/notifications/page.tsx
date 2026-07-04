@@ -9,7 +9,12 @@ const money = (value: number) => new Intl.NumberFormat("en-KE", {
   maximumFractionDigits: 0,
 }).format(value);
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sms_result?: string; sms_ok?: string }>;
+}) {
+  const params = await searchParams;
   const { supabase, organizationId } = await getWorkspace();
   const [{ data: preferences }, { data: invoices }, { data: messages }] = await Promise.all([
     supabase.from("notification_preferences").select("*").eq("organization_id", organizationId).maybeSingle(),
@@ -61,7 +66,11 @@ export default async function NotificationsPage() {
       <div className="management-grid">
         <details>
           <summary>Test Africa&apos;s Talking SMS</summary>
-          <TestSmsForm disabled={!configured.sms} />
+          <TestSmsForm
+            disabled={!configured.sms}
+            result={params.sms_result}
+            succeeded={params.sms_ok === "1"}
+          />
         </details>
       </div>
 

@@ -1,44 +1,24 @@
-"use client";
-
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-
-export function TestSmsForm({ disabled }: { disabled: boolean }) {
-  const router = useRouter();
-  const [message, setMessage] = useState("");
-  const [sending, setSending] = useState(false);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    setSending(true);
-    setMessage("");
-    try {
-      const response = await fetch("/api/notifications/test-sms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient: form.get("recipient") }),
-      });
-      const result = await response.json() as { ok?: boolean; message?: string };
-      setMessage(result.message ?? (response.ok ? "SMS accepted." : "SMS failed."));
-      router.refresh();
-    } catch {
-      setMessage("Could not reach the SMS test service. Please try again.");
-    } finally {
-      setSending(false);
-    }
-  }
-
+export function TestSmsForm({
+  disabled,
+  result,
+  succeeded,
+}: {
+  disabled: boolean;
+  result?: string;
+  succeeded?: boolean;
+}) {
   return (
-    <form onSubmit={submit} className="inline-form">
+    <form action="/api/notifications/test-sms" method="post" className="inline-form">
       <label>
         Sandbox simulator number
         <input name="recipient" type="tel" placeholder="+2547XXXXXXXX" required />
       </label>
-      <button disabled={disabled || sending}>
-        {sending ? "Sending…" : "Send test SMS"}
-      </button>
-      {message ? <p className="form-message" role="status">{message}</p> : null}
+      <button disabled={disabled}>Send test SMS</button>
+      {result ? (
+        <p className={`form-message ${succeeded ? "status-active" : "status-overdue"}`} role="status">
+          {result}
+        </p>
+      ) : null}
       <small>Sandbox messages appear in the Africa&apos;s Talking phone simulator, not on a real handset.</small>
     </form>
   );
