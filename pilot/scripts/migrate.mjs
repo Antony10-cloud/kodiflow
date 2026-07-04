@@ -8,8 +8,12 @@ if (!connectionString) {
   throw new Error("POSTGRES_URL_NON_POOLING or POSTGRES_URL is required");
 }
 
+const migrationName = process.argv[2] || "001_initial_schema.sql";
+if (!/^\d{3}_[a-z0-9_]+\.sql$/.test(migrationName)) {
+  throw new Error("Migration name must be a file from supabase/migrations.");
+}
 const migration = await readFile(
-  new URL("../supabase/migrations/001_initial_schema.sql", import.meta.url),
+  new URL(`../supabase/migrations/${migrationName}`, import.meta.url),
   "utf8",
 );
 
@@ -21,7 +25,7 @@ const sql = postgres(connectionString, {
 
 try {
   await sql.unsafe(migration);
-  console.log("KodiFlow database migration completed.");
+  console.log(`KodiFlow database migration completed: ${migrationName}`);
 } finally {
   await sql.end();
 }

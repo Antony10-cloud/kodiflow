@@ -11,7 +11,15 @@ export async function createProperty(formData: FormData) {
   const name = text(formData, "name");
   const location = text(formData, "location");
   if (!name || !location) return;
-  const { error } = await supabase.from("properties").insert({ organization_id: organizationId, name, location });
+  const amenities = text(formData, "amenities").split(",").map(item => item.trim()).filter(Boolean);
+  const { error } = await supabase.from("properties").insert({
+    organization_id: organizationId,
+    name,
+    location,
+    property_type: text(formData, "property_type") || null,
+    description: text(formData, "description") || null,
+    amenities,
+  });
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard/properties");
 }
@@ -21,6 +29,7 @@ export async function createUnit(formData: FormData) {
   const propertyId = text(formData, "property_id");
   const name = text(formData, "name");
   const monthlyRent = Number(formData.get("monthly_rent"));
+  const amenities = text(formData, "amenities").split(",").map(item => item.trim()).filter(Boolean);
   if (!propertyId || !name || monthlyRent < 0) return;
   const { error } = await supabase.from("units").insert({
     organization_id: organizationId,
@@ -28,9 +37,92 @@ export async function createUnit(formData: FormData) {
     name,
     monthly_rent: monthlyRent,
     status: "vacant",
+    bedrooms: Number(formData.get("bedrooms")) || null,
+    bathrooms: Number(formData.get("bathrooms")) || null,
+    size_sqft: Number(formData.get("size_sqft")) || null,
+    amenities,
   });
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard/properties");
+}
+
+export async function createLease(formData: FormData) {
+  const { supabase, organizationId } = await getWorkspace();
+  const tenantId = text(formData, "tenant_id");
+  const unitId = text(formData, "unit_id");
+  const monthlyRent = Number(formData.get("monthly_rent"));
+  const startDate = text(formData, "start_date");
+  const endDate = text(formData, "end_date");
+  if (!tenantId || !unitId || !startDate || !endDate || monthlyRent < 0) return;
+  const { error } = await supabase.from("leases").insert({
+    organization_id: organizationId,
+    tenant_id: tenantId,
+    unit_id: unitId,
+    start_date: startDate,
+    end_date: endDate,
+    monthly_rent: monthlyRent,
+    deposit_amount: Number(formData.get("deposit_amount")) || 0,
+    renewal_notice_days: Number(formData.get("renewal_notice_days")) || 30,
+    status: "active",
+    notes: text(formData, "notes") || null,
+  });
+  if (error) throw new Error(error.message);
+  await supabase.from("tenants").update({ unit_id: unitId, active: true })
+    .eq("id", tenantId).eq("organization_id", organizationId);
+  await supabase.from("units").update({ status: "occupied" })
+    .eq("id", unitId).eq("organization_id", organizationId);
+  revalidatePath("/dashboard/leases");
+  revalidatePath("/dashboard/tenants");
+  revalidatePath("/dashboard/properties");
+}
+
+export async function renewLease(formData: FormData) {
+  const { supabase, organizationId } = await getWorkspace();
+  const leaseId = text(formData, "lease_id");
+  const endDate = text(formData, "end_date");
+  if (!leaseId || !endDate) return;
+  const { error } = await supabase.from("leases").update({
+    end_date: endDate,
+    monthly_rent: Number(formData.get("monthly_rent")),
+    status: "active",
+  }).eq("id", leaseId).eq("organization_id", organizationId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard/leases");
+}
+
+export async function createMaintenanceRequest(formData: FormData) {
+  const { supabase, organizationId } = await getWorkspace();
+  const propertyId = text(formData, "property_id");
+  const title = text(formData, "title");
+  if (!propertyId || !title) return;
+  const { error } = await supabase.from("maintenance_requests").insert({
+    organization_id: organizationId,
+    property_id: propertyId,
+    unit_id: text(formData, "unit_id") || null,
+    tenant_id: text(formData, "tenant_id") || null,
+    title,
+    description: text(formData, "description") || null,
+    priority: text(formData, "priority") || "medium",
+    status: "open",
+    estimated_cost: Number(formData.get("estimated_cost")) || null,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard/maintenance");
+}
+
+export async function updateMaintenanceStatus(formData: FormData) {
+  const { supabase, organizationId } = await getWorkspace();
+  const requestId = text(formData, "request_id");
+  const status = text(formData, "status");
+  if (!requestId || !status) return;
+  const { error } = await supabase.from("maintenance_requests").update({
+    status,
+    actual_cost: Number(formData.get("actual_cost")) || null,
+    resolved_at: status === "resolved" ? new Date().toISOString() : null,
+  }).eq("id", requestId).eq("organization_id", organizationId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard/maintenance");
+  revalidatePath("/dashboard/reports");
 }
 
 export async function createTenant(formData: FormData) {
