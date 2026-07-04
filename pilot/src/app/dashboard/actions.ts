@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getWorkspace } from "@/lib/workspace";
+import { rentReminderMessage, sendSms } from "@/lib/notifications";
 
 const text = (formData: FormData, key: string) => String(formData.get(key) ?? "").trim();
 
@@ -95,16 +96,23 @@ export async function generateMonthlyRent(formData: FormData) {
   const { supabase, organizationId } = await getWorkspace();
   const month = text(formData, "month");
   const dueDay = Math.min(28, Math.max(1, Number(formData.get("due_day")) || 5));
+  const sendSmsReminders = formData.get("send_sms") === "on";
   if (!/^\d{4}-\d{2}$/.test(month)) return;
   const { data: tenants } = await supabase.from("tenants")
-    .select("id,account_reference,unit_id,units(monthly_rent)")
+    .select("id,full_name,phone,account_reference,unit_id,units(name,monthly_rent)")
     .eq("organization_id", organizationId).eq("active", true).not("unit_id", "is", null);
+  const { data: mpesa } = sendSmsReminders
+    ? await supabase.from("mpesa_connections")
+      .select("account_type,shortcode")
+      .eq("organization_id", organizationId)
+      .maybeSingle()
+    : { data: null };
   for (const tenant of tenants ?? []) {
     const unit = Array.isArray(tenant.units) ? tenant.units[0] : tenant.units;
     const amount = Number(unit?.monthly_rent ?? 0);
     if (!amount) continue;
     const invoiceNumber = `RENT-${month.replace("-", "")}-${tenant.account_reference}`;
-    await supabase.from("invoices").upsert({
+    const { data: invoice } = await supabase.from("invoices").upsert({
       organization_id: organizationId,
       tenant_id: tenant.id,
       invoice_number: invoiceNumber,
@@ -114,9 +122,48 @@ export async function generateMonthlyRent(formData: FormData) {
       balance: amount,
       due_date: `${month}-${String(dueDay).padStart(2, "0")}`,
       status: "pending",
-    }, { onConflict: "organization_id,invoice_number", ignoreDuplicates: true });
+    }, { onConflict: "organization_id,invoice_number", ignoreDuplicates: true })
+      .select("id")
+      .maybeSingle();
+
+    if (!sendSmsReminders || !invoice || !tenant.phone) continue;
+    const reminder = rentReminderMessage({
+      tenantName: tenant.full_name,
+      amount,
+      dueDate: `${month}-${String(dueDay).padStart(2, "0")}`,
+      accountReference: tenant.account_reference,
+      unitName: unit?.name,
+      paymentType: mpesa?.account_type,
+      shortcode: mpesa?.shortcode,
+    });
+    const { data: log } = await supabase.from("notification_messages").insert({
+      organization_id: organizationId,
+      tenant_id: tenant.id,
+      invoice_id: invoice.id,
+      channel: "sms",
+      recipient: tenant.phone,
+      template_key: "monthly_rent_invoice",
+      body: reminder.body,
+      status: "queued",
+    }).select("id").single();
+    if (!log) continue;
+    try {
+      const result = await sendSms(tenant.phone, reminder.body);
+      await supabase.from("notification_messages").update({
+        status: "sent",
+        provider_message_id: result.providerMessageId ?? null,
+        provider_status: result.providerStatus,
+        sent_at: new Date().toISOString(),
+      }).eq("id", log.id).eq("organization_id", organizationId);
+    } catch (error) {
+      await supabase.from("notification_messages").update({
+        status: "failed",
+        error_message: error instanceof Error ? error.message : "SMS delivery failed.",
+      }).eq("id", log.id).eq("organization_id", organizationId);
+    }
   }
   revalidatePath("/dashboard/invoices");
+  revalidatePath("/dashboard/notifications");
   revalidatePath("/dashboard/reports");
 }
 
