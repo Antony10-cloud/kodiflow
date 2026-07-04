@@ -103,6 +103,20 @@ export async function sendWhatsAppTemplate(input: {
   }
 
   const version = env.META_WHATSAPP_API_VERSION || "v23.0";
+  const parameters = templateName === "jaspers_market_order_confirmation_v1"
+    ? [
+        { type: "text", text: input.tenantName },
+        { type: "text", text: input.accountReference },
+        { type: "text", text: input.dueDate },
+      ]
+    : [
+        { type: "text", text: input.tenantName },
+        { type: "text", text: input.unitName },
+        { type: "text", text: input.amount },
+        { type: "text", text: input.dueDate },
+        { type: "text", text: input.paymentInstructions },
+        { type: "text", text: input.accountReference },
+      ];
   const response = await fetch(`https://graph.facebook.com/${version}/${phoneNumberId}/messages`, {
     method: "POST",
     headers: {
@@ -118,14 +132,7 @@ export async function sendWhatsAppTemplate(input: {
         language: { code: env.META_WHATSAPP_TEMPLATE_LANGUAGE || "en_US" },
         components: [{
           type: "body",
-          parameters: [
-            { type: "text", text: input.tenantName },
-            { type: "text", text: input.unitName },
-            { type: "text", text: input.amount },
-            { type: "text", text: input.dueDate },
-            { type: "text", text: input.paymentInstructions },
-            { type: "text", text: input.accountReference },
-          ],
+          parameters,
         }],
       },
     }),

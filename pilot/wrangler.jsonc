@@ -10,7 +10,11 @@
   },
   "vars": {
     "AFRICASTALKING_USERNAME": "sandbox",
-    "AFRICASTALKING_ENVIRONMENT": "sandbox"
+    "AFRICASTALKING_ENVIRONMENT": "sandbox",
+    "META_WHATSAPP_PHONE_NUMBER_ID": "1232180323304546",
+    "META_WHATSAPP_TEMPLATE_NAME": "jaspers_market_order_confirmation_v1",
+    "META_WHATSAPP_TEMPLATE_LANGUAGE": "en_US",
+    "META_WHATSAPP_API_VERSION": "v25.0"
   },
   "observability": {
     "enabled": true
