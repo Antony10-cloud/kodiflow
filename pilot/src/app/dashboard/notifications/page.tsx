@@ -9,6 +9,12 @@ const money = (value: number) => new Intl.NumberFormat("en-KE", {
   maximumFractionDigits: 0,
 }).format(value);
 
+const nairobiDateTime = (value: string) => new Intl.DateTimeFormat("en-KE", {
+  timeZone: "Africa/Nairobi",
+  dateStyle: "short",
+  timeStyle: "medium",
+}).format(new Date(value));
+
 export default async function NotificationsPage({
   searchParams,
 }: {
@@ -95,7 +101,7 @@ export default async function NotificationsPage({
         <div className="table-wrap"><table><thead><tr><th>Tenant</th><th>Channel</th><th>Recipient</th><th>Status</th><th>Time</th></tr></thead><tbody>
           {messages.map((message: any) => {
             const tenant = Array.isArray(message.tenants) ? message.tenants[0] : message.tenants;
-            return <tr key={message.id}><td>{tenant?.full_name ?? "Tenant"}</td><td>{message.channel.toUpperCase()}</td><td>{message.recipient}</td><td><span className={`status status-${message.status === "failed" ? "overdue" : "active"}`}>{message.error_message ?? message.provider_status ?? message.status}</span></td><td>{new Date(message.created_at).toLocaleString("en-KE")}</td></tr>;
+            return <tr key={message.id}><td>{tenant?.full_name ?? "Tenant"}</td><td>{message.channel.toUpperCase()}</td><td>{message.recipient}</td><td><span className={`status status-${message.status === "failed" ? "overdue" : "active"}`}>{message.error_message ?? message.provider_status ?? message.status}</span></td><td>{nairobiDateTime(message.created_at)}</td></tr>;
           })}
         </tbody></table></div>}
     </>

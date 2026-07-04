@@ -8,6 +8,10 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "vars": {
+    "AFRICASTALKING_USERNAME": "sandbox",
+    "AFRICASTALKING_ENVIRONMENT": "sandbox"
+  },
   "observability": {
     "enabled": true
   }
