@@ -29,7 +29,7 @@ export default async function NotificationsPage({
       .order("created_at", { ascending: false })
       .limit(30),
   ]);
-  const configured = notificationConfiguration();
+  const configured = await notificationConfiguration();
 
   return (
     <>

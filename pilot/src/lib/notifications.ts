@@ -3,6 +3,28 @@ type SendResult = {
   providerStatus: string;
 };
 
+type NotificationEnv = {
+  AFRICASTALKING_USERNAME?: string;
+  AFRICASTALKING_API_KEY?: string;
+  AFRICASTALKING_ENVIRONMENT?: string;
+  AFRICASTALKING_SENDER_ID?: string;
+  META_WHATSAPP_ACCESS_TOKEN?: string;
+  META_WHATSAPP_PHONE_NUMBER_ID?: string;
+  META_WHATSAPP_TEMPLATE_NAME?: string;
+  META_WHATSAPP_API_VERSION?: string;
+  META_WHATSAPP_TEMPLATE_LANGUAGE?: string;
+};
+
+async function getNotificationEnv(): Promise<NotificationEnv> {
+  try {
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    const { env } = await getCloudflareContext({ async: true });
+    return { ...process.env, ...env } as NotificationEnv;
+  } catch {
+    return process.env as NotificationEnv;
+  }
+}
+
 const normalizeKenyanPhone = (value: string) => {
   const digits = value.replace(/\D/g, "");
   if (digits.startsWith("254")) return `+${digits}`;
@@ -11,23 +33,25 @@ const normalizeKenyanPhone = (value: string) => {
   return `+${digits}`;
 };
 
-export function notificationConfiguration() {
+export async function notificationConfiguration() {
+  const env = await getNotificationEnv();
   return {
-    sms: Boolean(process.env.AFRICASTALKING_USERNAME && process.env.AFRICASTALKING_API_KEY),
+    sms: Boolean(env.AFRICASTALKING_USERNAME && env.AFRICASTALKING_API_KEY),
     whatsapp: Boolean(
-      process.env.META_WHATSAPP_ACCESS_TOKEN &&
-      process.env.META_WHATSAPP_PHONE_NUMBER_ID &&
-      process.env.META_WHATSAPP_TEMPLATE_NAME,
+      env.META_WHATSAPP_ACCESS_TOKEN &&
+      env.META_WHATSAPP_PHONE_NUMBER_ID &&
+      env.META_WHATSAPP_TEMPLATE_NAME,
     ),
   };
 }
 
 export async function sendSms(recipient: string, message: string): Promise<SendResult> {
-  const username = process.env.AFRICASTALKING_USERNAME;
-  const apiKey = process.env.AFRICASTALKING_API_KEY;
+  const env = await getNotificationEnv();
+  const username = env.AFRICASTALKING_USERNAME;
+  const apiKey = env.AFRICASTALKING_API_KEY;
   if (!username || !apiKey) throw new Error("Africa's Talking SMS is not configured.");
 
-  const sandbox = process.env.AFRICASTALKING_ENVIRONMENT !== "production";
+  const sandbox = env.AFRICASTALKING_ENVIRONMENT !== "production";
   const endpoint = sandbox
     ? "https://api.sandbox.africastalking.com/version1/messaging"
     : "https://api.africastalking.com/version1/messaging";
@@ -36,8 +60,8 @@ export async function sendSms(recipient: string, message: string): Promise<SendR
     to: normalizeKenyanPhone(recipient),
     message,
   });
-  if (process.env.AFRICASTALKING_SENDER_ID) {
-    payload.set("from", process.env.AFRICASTALKING_SENDER_ID);
+  if (env.AFRICASTALKING_SENDER_ID) {
+    payload.set("from", env.AFRICASTALKING_SENDER_ID);
   }
 
   const response = await fetch(endpoint, {
@@ -70,14 +94,15 @@ export async function sendWhatsAppTemplate(input: {
   paymentInstructions: string;
   accountReference: string;
 }): Promise<SendResult> {
-  const accessToken = process.env.META_WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.META_WHATSAPP_PHONE_NUMBER_ID;
-  const templateName = process.env.META_WHATSAPP_TEMPLATE_NAME;
+  const env = await getNotificationEnv();
+  const accessToken = env.META_WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = env.META_WHATSAPP_PHONE_NUMBER_ID;
+  const templateName = env.META_WHATSAPP_TEMPLATE_NAME;
   if (!accessToken || !phoneNumberId || !templateName) {
     throw new Error("WhatsApp Cloud API is not configured.");
   }
 
-  const version = process.env.META_WHATSAPP_API_VERSION || "v23.0";
+  const version = env.META_WHATSAPP_API_VERSION || "v23.0";
   const response = await fetch(`https://graph.facebook.com/${version}/${phoneNumberId}/messages`, {
     method: "POST",
     headers: {
@@ -90,7 +115,7 @@ export async function sendWhatsAppTemplate(input: {
       type: "template",
       template: {
         name: templateName,
-        language: { code: process.env.META_WHATSAPP_TEMPLATE_LANGUAGE || "en_US" },
+        language: { code: env.META_WHATSAPP_TEMPLATE_LANGUAGE || "en_US" },
         components: [{
           type: "body",
           parameters: [
