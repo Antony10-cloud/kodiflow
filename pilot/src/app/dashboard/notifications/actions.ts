@@ -96,35 +96,3 @@ export async function sendRentReminder(formData: FormData) {
   }
   revalidatePath("/dashboard/notifications");
 }
-
-export async function sendTestSms(formData: FormData) {
-  const { supabase, organizationId } = await getWorkspace();
-  const recipient = text(formData, "recipient");
-  if (!recipient) return;
-  const body = "KodiFlow SMS test successful. Tenant rent reminders are ready for this landlord workspace.";
-  const { data: log, error: logError } = await supabase.from("notification_messages").insert({
-    organization_id: organizationId,
-    channel: "sms",
-    recipient,
-    template_key: "provider_test",
-    body,
-    status: "queued",
-  }).select("id").single();
-  if (logError || !log) throw new Error(logError?.message ?? "Could not create the SMS test.");
-
-  try {
-    const result = await sendSms(recipient, body);
-    await supabase.from("notification_messages").update({
-      status: "sent",
-      provider_message_id: result.providerMessageId ?? null,
-      provider_status: result.providerStatus,
-      sent_at: new Date().toISOString(),
-    }).eq("id", log.id).eq("organization_id", organizationId);
-  } catch (error) {
-    await supabase.from("notification_messages").update({
-      status: "failed",
-      error_message: error instanceof Error ? error.message : "SMS test failed.",
-    }).eq("id", log.id).eq("organization_id", organizationId);
-  }
-  revalidatePath("/dashboard/notifications");
-}
