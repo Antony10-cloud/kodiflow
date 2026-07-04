@@ -24,6 +24,7 @@ export async function getDarajaAccessToken() {
     {
       headers: { Authorization: `Basic ${authorization}` },
       cache: "no-store",
+      signal: AbortSignal.timeout(15_000),
     },
   );
   const payload = (await response.json()) as DarajaTokenResponse;
