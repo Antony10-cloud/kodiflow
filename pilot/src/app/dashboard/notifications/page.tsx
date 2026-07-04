@@ -67,7 +67,6 @@ export default async function NotificationsPage({
         <details>
           <summary>Test Africa&apos;s Talking SMS</summary>
           <TestSmsForm
-            disabled={!configured.sms}
             result={params.sms_result}
             succeeded={params.sms_ok === "1"}
           />

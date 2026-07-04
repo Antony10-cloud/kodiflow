@@ -1,9 +1,7 @@
 export function TestSmsForm({
-  disabled,
   result,
   succeeded,
 }: {
-  disabled: boolean;
   result?: string;
   succeeded?: boolean;
 }) {
@@ -13,7 +11,7 @@ export function TestSmsForm({
         Sandbox simulator number
         <input name="recipient" type="tel" placeholder="+2547XXXXXXXX" required />
       </label>
-      <button disabled={disabled}>Send test SMS</button>
+      <button>Send test SMS</button>
       {result ? (
         <p className={`form-message ${succeeded ? "status-active" : "status-overdue"}`} role="status">
           {result}
