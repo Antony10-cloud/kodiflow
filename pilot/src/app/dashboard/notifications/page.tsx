@@ -1,6 +1,6 @@
 import { getWorkspace } from "@/lib/workspace";
 import { notificationConfiguration } from "@/lib/notifications";
-import { saveNotificationPreferences, sendRentReminder } from "./actions";
+import { saveNotificationPreferences, sendRentReminder, sendTestSms } from "./actions";
 
 const money = (value: number) => new Intl.NumberFormat("en-KE", {
   style: "currency",
@@ -55,6 +55,20 @@ export default async function NotificationsPage() {
             <button>Save reminder policy</button>
           </form>
         </article>
+      </div>
+
+      <div className="management-grid">
+        <details>
+          <summary>Test Africa&apos;s Talking SMS</summary>
+          <form action={sendTestSms} className="inline-form">
+            <label>
+              Sandbox simulator number
+              <input name="recipient" type="tel" placeholder="+2547XXXXXXXX" required />
+            </label>
+            <button disabled={!configured.sms}>Send test SMS</button>
+            <small>Sandbox messages appear in the Africa&apos;s Talking phone simulator, not on a real handset.</small>
+          </form>
+        </details>
       </div>
 
       <div className="page-heading spaced">
